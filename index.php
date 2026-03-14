@@ -2,7 +2,8 @@
 
 include "config.php";
 
-$update = json_decode(file_get_contents("php://input"), true);
+$content = file_get_contents("php://input");
+$update = json_decode($content, true);
 
 if(isset($update["message"])){
 
@@ -11,49 +12,47 @@ $text = $update["message"]["text"];
 
 }
 
-function sendMessage($chat_id,$text,$keyboard=null){
+function sendMessage($chat_id,$message,$keyboard=null){
 
 global $bot_token;
 
-$url = "https://api.telegram.org/bot$bot_token/sendMessage";
+$url = "https://api.telegram.org/bot".$bot_token."/sendMessage";
 
-$data = [
+$post = [
 "chat_id"=>$chat_id,
-"text"=>$text,
-"reply_markup"=>$keyboard
+"text"=>$message,
+"parse_mode"=>"HTML"
 ];
 
-$options = [
-"http"=>[
-"header"=>"Content-Type: application/json",
-"method"=>"POST",
-"content"=>json_encode($data)
-]
-];
+if($keyboard){
+$post["reply_markup"] = $keyboard;
+}
 
-$context = stream_context_create($options);
-
-file_get_contents($url,false,$context);
+$ch = curl_init($url);
+curl_setopt($ch,CURLOPT_RETURNTRANSFER,true);
+curl_setopt($ch,CURLOPT_POSTFIELDS,$post);
+curl_exec($ch);
+curl_close($ch);
 
 }
 
-if($text=="/start"){
+if(isset($text) && $text == "/start"){
 
 $keyboard = json_encode([
 "inline_keyboard"=>[
 [
-["text"=>"Get Premium","callback_data"=>"premium"]
+["text"=>"💎 Get Premium","callback_data"=>"premium"]
 ],
 [
-["text"=>"Premium Demo","url"=>$demo_channel]
+["text"=>"🎬 Premium Demo","url"=>$demo_channel]
 ],
 [
-["text"=>"How To Get Premium","url"=>$show_channel]
+["text"=>"📖 How To Get Premium","url"=>$show_channel]
 ]
 ]
 ]);
 
-sendMessage($chat_id,"Price ₹99\nValidity Lifetime",$keyboard);
+sendMessage($chat_id,"💰 Price ₹99\n⏳ Validity Lifetime",$keyboard);
 
 }
 
